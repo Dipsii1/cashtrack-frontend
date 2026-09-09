@@ -1,22 +1,43 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { savingService, type SavingsGoalInput } from "@/services/saving";
+import {
+  savingService,
+  type SavingsGoalInput,
+  type SavingsContributionInput,
+} from "@/services/saving";
 import { getErrorMessage } from "@/utils/errors";
-import type { SavingsGoal } from "@/types";
-
-type SavingsListResponse = { data: SavingsGoal[]; meta: unknown };
+import type { SavingsGoal, SavingsContribution } from "@/types";
 
 export const savingsKeys = {
   all: ["savings-goals"] as const,
   list: () => [...savingsKeys.all, "list"] as const,
 };
 
+async function fetchGoalsWithContributions(): Promise<SavingsGoal[]> {
+  const [goalsRes, contributionsRes] = await Promise.all([
+    savingService.list(1, 100),
+    savingService.listContributions(),
+  ]);
+
+  const contributionsByGoal = new Map<string, SavingsContribution[]>();
+  for (const c of contributionsRes.data) {
+    const goalId = c.savingsGoal.publicId;
+    const arr = contributionsByGoal.get(goalId) ?? [];
+    arr.push(c);
+    contributionsByGoal.set(goalId, arr);
+  }
+
+  return goalsRes.data.map((goal) => ({
+    ...goal,
+    contributions: contributionsByGoal.get(goal.publicId) ?? [],
+  }));
+}
+
 export function useSavingsGoals(enabled = true) {
   return useQuery({
     queryKey: savingsKeys.list(),
-    queryFn: () => savingService.list(1, 100),
+    queryFn: fetchGoalsWithContributions,
     enabled,
-    select: (data: SavingsListResponse) => data.data,
   });
 }
 
@@ -25,8 +46,8 @@ export function useCreateSavingsGoal() {
   return useMutation({
     mutationFn: (input: SavingsGoalInput) => savingService.create(input),
     onSuccess: (goal) => {
-      qc.setQueryData<SavingsListResponse>(savingsKeys.list(), (old) =>
-        old ? { ...old, data: [goal, ...old.data] } : old
+      qc.setQueryData<SavingsGoal[]>(savingsKeys.list(), (old) =>
+        old ? [{ ...goal, contributions: goal.contributions ?? [] }, ...old] : old
       );
       qc.invalidateQueries({ queryKey: savingsKeys.all });
       toast.success("Tabungan berhasil dibuat");
@@ -60,6 +81,36 @@ export function useDeleteSavingsGoal() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: savingsKeys.all });
       toast.success("Tabungan berhasil dihapus");
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+}
+
+export function useCreateSavingsContribution() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      goalPublicId,
+      input,
+    }: {
+      goalPublicId: string;
+      input: SavingsContributionInput;
+    }) => savingService.createContribution(goalPublicId, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: savingsKeys.all });
+      toast.success("Kontribusi berhasil ditambahkan");
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+}
+
+export function useDeleteSavingsContribution() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (publicId: string) => savingService.deleteContribution(publicId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: savingsKeys.all });
+      toast.success("Kontribusi berhasil dihapus");
     },
     onError: (error) => toast.error(getErrorMessage(error)),
   });

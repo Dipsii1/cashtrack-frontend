@@ -73,6 +73,17 @@ export interface Budget {
   categoryId: string | null;
 }
 
+export interface SavingsContribution {
+  publicId: string;
+  amount: number;
+  note: string | null;
+  contributionDate: string;
+  createdAt: string;
+  updatedAt: string;
+  savingsGoal: { publicId: string; name: string };
+  wallet: { publicId: string; name: string; currency: string } | null;
+}
+
 export interface SavingsGoal {
   publicId: string;
   name: string;
@@ -80,6 +91,7 @@ export interface SavingsGoal {
   currentAmount: number;
   targetDate: string | null;
   isAchieved: boolean;
+  contributions: SavingsContribution[];
   createdAt: string;
   updatedAt: string;
 }
@@ -102,4 +114,14 @@ export interface RecurringTransaction {
     icon: string | null;
     color: string | null;
   } | null;
+}
+
+export interface Attachment {
+  publicId: string;
+  transactionId: string | null;
+  fileName: string;
+  fileUrl: string;
+  mimeType: string;
+  fileSize: string;
+  createdAt: string;
 }

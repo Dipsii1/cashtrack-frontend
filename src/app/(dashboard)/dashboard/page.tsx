@@ -21,11 +21,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/common/empty-state";
-import { Badge } from "@/components/ui/badge";
 import { IncomeExpenseChart } from "@/components/charts/line-chart";
 import { CategoryPieChart } from "@/components/charts/pie-chart";
 import { MonthlyBarChart } from "@/components/charts/bar-chart";
-import { BudgetProgress } from "@/components/charts/budget-progress";
 import { CategoryIcon } from "@/components/common/category-icon";
 import { useDashboard } from "@/hooks/useDashboard";
 import { TransactionForm } from "@/features/transactions/transaction-form";
@@ -33,7 +31,7 @@ import { WalletForm } from "@/features/wallets/wallet-form";
 import { BudgetForm } from "@/features/budgets/budget-form";
 import { SavingsGoalForm } from "@/features/savings-goals/savings-goal-form";
 import { formatCurrency } from "@/utils/format";
-import { formatDate, getBudgetPeriodLabel } from "@/utils/date";
+import { formatDate } from "@/utils/date";
 import { cn } from "@/lib/utils";
 
 export default function DashboardPage() {
@@ -106,7 +104,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="">
         <Card className="lg:col-span-2">
           <CardHeader className="flex-row items-center justify-between space-y-0">
             <div>
@@ -116,41 +114,6 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <MonthlyBarChart data={dashboard.monthlySpending} loading={dashboard.loading} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Budget</CardTitle>
-            <CardDescription>Ringkasan anggaran</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {dashboard.loading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-              </div>
-            ) : dashboard.budgets.length === 0 ? (
-              <EmptyState title="Belum ada budget" description="Buat budget untuk mengontrol pengeluaran" />
-            ) : (
-              dashboard.budgets.slice(0, 3).map((budget) => (
-                <div key={budget.publicId} className="rounded-2xl border p-3 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-sm">{budget.name}</p>
-                    <Badge variant="secondary">{getBudgetPeriodLabel(budget.period)}</Badge>
-                  </div>
-                  <BudgetProgress
-                    spent={dashboard.spentThisMonth}
-                    budget={Number(budget.amount)}
-                    period={getBudgetPeriodLabel(budget.period)}
-                    showPercent={false}
-                  />
-                </div>
-              ))
-            )}
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/budgets">Lihat semua</Link>
-            </Button>
           </CardContent>
         </Card>
       </div>
