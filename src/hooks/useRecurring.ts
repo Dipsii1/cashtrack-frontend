@@ -4,6 +4,8 @@ import { recurringService, type RecurringInput } from "@/services/recurring";
 import { getErrorMessage } from "@/utils/errors";
 import type { RecurringTransaction } from "@/types";
 
+type RecurringListResponse = { data: RecurringTransaction[]; meta: unknown };
+
 export const recurringKeys = {
   all: ["recurring-transactions"] as const,
   list: (isActive?: boolean) => [...recurringKeys.all, "list", isActive] as const,
@@ -14,7 +16,7 @@ export function useRecurringTransactions(isActive?: boolean, enabled = true) {
     queryKey: recurringKeys.list(isActive),
     queryFn: () => recurringService.list(1, 100, isActive),
     enabled,
-    select: (data: { data: RecurringTransaction[]; meta: unknown }) => data.data,
+    select: (data: RecurringListResponse) => data.data,
   });
 }
 
@@ -23,7 +25,13 @@ export function useCreateRecurring() {
   return useMutation({
     mutationFn: (input: RecurringInput) => recurringService.create(input),
     onSuccess: (rt) => {
-      qc.setQueryData<RecurringTransaction[]>(recurringKeys.list(), (old) => [rt, ...(old ?? [])]);
+      // rt baru dibuat, biasanya aktif — sentuh cache yang relevan (true & undefined),
+      // lalu invalidate semua supaya varian lain (false) ikut ter-refresh
+      const prepend = (old: RecurringListResponse | undefined) =>
+        old ? { ...old, data: [rt, ...old.data] } : old;
+
+      qc.setQueryData<RecurringListResponse>(recurringKeys.list(true), prepend);
+      qc.setQueryData<RecurringListResponse>(recurringKeys.list(undefined), prepend);
       qc.invalidateQueries({ queryKey: recurringKeys.all });
       toast.success("Transaksi berkala berhasil dibuat");
     },

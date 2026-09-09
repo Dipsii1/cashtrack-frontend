@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { CalendarClock, Plus, Pencil, Trash2, Power, RotateCcw, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -90,16 +90,19 @@ export default function RecurringPage() {
             onAction={() => setCreating(true)}
           />
         </Card>
-      ) : (
-        <div className="space-y-3">
-          {recurrings.map((rt, index) => {
+) : (
+         <AnimatePresence mode="popLayout">
+           <div className="space-y-3">
+             {recurrings.map((rt, index) => {
             const isIncome = rt.type === "INCOME";
             return (
-              <motion.div
-                key={rt.publicId}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.04 }}
+<motion.div
+                 key={rt.publicId}
+                 layout
+                 initial={false}
+                 animate={{ opacity: 1, x: 0 }}
+                 exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
+                 transition={{ duration: 0.2 }}
                 className={cn(
                   "rounded-2xl border bg-card p-4 transition-shadow hover:shadow-md",
                   !rt.isActive && "opacity-60"
@@ -176,9 +179,10 @@ export default function RecurringPage() {
                 </div>
               </motion.div>
             );
-          })}
-        </div>
-      )}
+})}
+         </div>
+         </AnimatePresence>
+       )}
 
       <Dialog open={editing !== null} onOpenChange={(open) => !open && setEditing(null)}>
         <DialogContent>

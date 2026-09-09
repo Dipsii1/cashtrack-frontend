@@ -4,6 +4,8 @@ import { savingService, type SavingsGoalInput } from "@/services/saving";
 import { getErrorMessage } from "@/utils/errors";
 import type { SavingsGoal } from "@/types";
 
+type SavingsListResponse = { data: SavingsGoal[]; meta: unknown };
+
 export const savingsKeys = {
   all: ["savings-goals"] as const,
   list: () => [...savingsKeys.all, "list"] as const,
@@ -14,7 +16,7 @@ export function useSavingsGoals(enabled = true) {
     queryKey: savingsKeys.list(),
     queryFn: () => savingService.list(1, 100),
     enabled,
-    select: (data: { data: SavingsGoal[]; meta: unknown }) => data.data,
+    select: (data: SavingsListResponse) => data.data,
   });
 }
 
@@ -23,7 +25,9 @@ export function useCreateSavingsGoal() {
   return useMutation({
     mutationFn: (input: SavingsGoalInput) => savingService.create(input),
     onSuccess: (goal) => {
-      qc.setQueryData<SavingsGoal[]>(savingsKeys.list(), (old) => [goal, ...(old ?? [])]);
+      qc.setQueryData<SavingsListResponse>(savingsKeys.list(), (old) =>
+        old ? { ...old, data: [goal, ...old.data] } : old
+      );
       qc.invalidateQueries({ queryKey: savingsKeys.all });
       toast.success("Tabungan berhasil dibuat");
     },

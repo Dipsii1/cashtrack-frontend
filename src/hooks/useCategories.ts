@@ -4,6 +4,8 @@ import { categoryService, type CategoryInput } from "@/services/category";
 import { getErrorMessage } from "@/utils/errors";
 import type { Category, CategoryType } from "@/types";
 
+type CategoryListResponse = { data: Category[]; meta: unknown };
+
 export const categoryKeys = {
   all: ["categories"] as const,
   list: (type?: CategoryType) => [...categoryKeys.all, "list", type ?? "all"] as const,
@@ -14,7 +16,7 @@ export function useCategories(type?: CategoryType, enabled = true) {
     queryKey: categoryKeys.list(type),
     queryFn: () => categoryService.list(type, 1, 100),
     enabled,
-    select: (data: { data: Category[]; meta: unknown }) => data.data,
+    select: (data: CategoryListResponse) => data.data,
   });
 }
 
@@ -23,11 +25,11 @@ export function useCreateCategory() {
   return useMutation({
     mutationFn: (input: CategoryInput) => categoryService.create(input),
     onSuccess: (category) => {
-      qc.setQueryData<Category[]>(categoryKeys.list(category.type), (old) => [
-        category,
-        ...(old ?? []),
-      ]);
-      qc.setQueryData<Category[]>(categoryKeys.list(), (old) => [category, ...(old ?? [])]);
+      const prepend = (old: CategoryListResponse | undefined) =>
+        old ? { ...old, data: [category, ...old.data] } : old;
+
+      qc.setQueryData<CategoryListResponse>(categoryKeys.list(category.type), prepend);
+      qc.setQueryData<CategoryListResponse>(categoryKeys.list(), prepend);
       qc.invalidateQueries({ queryKey: categoryKeys.all });
       toast.success("Kategori berhasil dibuat");
     },
@@ -40,7 +42,7 @@ export function useUpdateCategory() {
   return useMutation({
     mutationFn: ({ publicId, input }: { publicId: string; input: Partial<CategoryInput> }) =>
       categoryService.update(publicId, input),
-    onSuccess: (updated) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: categoryKeys.all });
       toast.success("Kategori berhasil diperbarui");
     },

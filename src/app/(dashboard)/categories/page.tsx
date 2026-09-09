@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Tags, Plus, Pencil, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ export default function CategoriesPage() {
   const expenses = allCategories.filter((c) => c.type === "EXPENSE");
   const incomes = allCategories.filter((c) => c.type === "INCOME");
 
-  function CategoryGrid({ categories, accent }: { categories: Category[]; accent?: string }) {
+function CategoryGrid({ categories, accent }: { categories: Category[]; accent?: string }) {
     if (isLoading) {
       return (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -40,55 +40,58 @@ export default function CategoriesPage() {
       return <EmptyState title="Belum ada kategori" description="Buat kategori baru untuk mengelompokkan transaksi" actionLabel="Tambah Kategori" onAction={() => setCreating(true)} />;
     }
     return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {categories.map((category, index) => (
-          <motion.div
-            key={category.publicId}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.03 }}
-            whileHover={{ y: -3 }}
-            className="group relative rounded-2xl border bg-card p-4 transition-shadow hover:shadow-md"
-          >
-            <div className="flex flex-col gap-3">
-              <div className="flex items-start justify-between">
-                <CategoryIcon icon={category.icon} color={category.color} size="lg" />
-                <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                  <button
-                    onClick={() => setEditing(category)}
-                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    aria-label={`Edit ${category.name}`}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <ConfirmDialog
-                    trigger={
-                      <button
-                        className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                        aria-label={`Hapus ${category.name}`}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    }
-                    title="Hapus Kategori?"
-                    description={`Kategori "${category.name}" akan dihapus. Transaksi dengan kategori ini akan menjadi tanpa kategori.`}
-                    onConfirm={() => deleteCategory.mutate(category.publicId)}
-                  />
+      <AnimatePresence mode="popLayout">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {categories.map((category, index) => (
+            <motion.div
+              key={category.publicId}
+              layout
+              initial={false}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
+              transition={{ duration: 0.2 }}
+              className="group relative rounded-2xl border bg-card p-4 transition-shadow hover:shadow-md"
+            >
+              <div className="flex flex-col gap-3">
+                <div className="flex items-start justify-between">
+                  <CategoryIcon icon={category.icon} color={category.color} size="lg" />
+                  <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    <button
+                      onClick={() => setEditing(category)}
+                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      aria-label={`Edit ${category.name}`}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <ConfirmDialog
+                      trigger={
+                        <button
+                          className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          aria-label={`Hapus ${category.name}`}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      }
+                      title="Hapus Kategori?"
+                      description={`Kategori "${category.name}" akan dihapus. Transaksi dengan kategori ini akan menjadi tanpa kategori.`}
+                      onConfirm={() => deleteCategory.mutate(category.publicId)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <p className="font-medium">{category.name}</p>
+                  <p className="text-xs text-muted-foreground">{getCategoryTypeLabel(category.type)}</p>
                 </div>
               </div>
-              <div>
-                <p className="font-medium">{category.name}</p>
-                <p className="text-xs text-muted-foreground">{getCategoryTypeLabel(category.type)}</p>
-              </div>
-            </div>
-            <div
-              className={cn("absolute bottom-0 left-4 right-4 h-0.5 rounded-full", accent)}
-            />
-          </motion.div>
-        ))}
-      </div>
-    );
-  }
+              <div
+                className={cn("absolute bottom-0 left-4 right-4 h-0.5 rounded-full", accent)}
+              />
+            </motion.div>
+          ))}
+        </div>
+        </AnimatePresence>
+      );
+    }
 
   return (
     <div className="space-y-6">

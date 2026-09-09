@@ -18,9 +18,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select-primitive";
 import { PageHeader } from "@/components/common/page-header";
 import { useAuthStore } from "@/store/auth";
-import { useThemeStore } from "@/store/theme";
+import { useTheme } from "next-themes";
 import { useSettingsStore } from "@/store/settings";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -57,25 +64,15 @@ const themeOptions = [
 
 export default function SettingsPage() {
   const { user, logout } = useAuthStore();
-  const { theme, setTheme } = useThemeStore();
+  const { theme, setTheme } = useTheme();
   const { currency, timezone, setCurrency, setTimezone } = useSettingsStore();
   const [name, setName] = React.useState(user?.name ?? "");
   const [email, setEmail] = React.useState(user?.email ?? "");
-
-  const [appliedTheme, setAppliedTheme] = React.useState(theme);
+  const [appliedTheme, setAppliedTheme] = React.useState<string>(theme ?? "system");
   const [appliedCurrency, setAppliedCurrency] = React.useState(currency);
   const [appliedTimezone, setAppliedTimezone] = React.useState(timezone);
 
-  React.useEffect(() => {
-    const root = document.documentElement;
-    const resolved =
-      appliedTheme === "system"
-        ? window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light"
-        : appliedTheme;
-    root.classList.toggle("dark", resolved === "dark");
-  }, [appliedTheme]);
+  React.useEffect(() => { setAppliedTheme(theme ?? "system"); }, [theme]);
 
   function saveAppearance() {
     setTheme(appliedTheme);
@@ -156,7 +153,7 @@ export default function SettingsPage() {
                     <button
                       key={opt.value}
                       type="button"
-                      onClick={() => setAppliedTheme(opt.value as typeof theme)}
+                      onClick={() => setAppliedTheme(opt.value)}
                       className={cn(
                         "flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all",
                         active ? "border-primary bg-primary/10" : "hover:bg-muted"
@@ -179,36 +176,32 @@ export default function SettingsPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="setting-currency">Mata Uang</Label>
-                <select
-                  id="setting-currency"
-                  className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
-                  value={appliedCurrency}
-                  onChange={(e) => setAppliedCurrency(e.target.value)}
-                >
-                  {currencies.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="setting-timezone">Zona Waktu</Label>
-                <select
-                  id="setting-timezone"
-                  className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
-                  value={appliedTimezone}
-                  onChange={(e) => setAppliedTimezone(e.target.value)}
-                >
-                  {timezones.map((tz) => (
-                    <option key={tz} value={tz}>
-                      {tz}
-                    </option>
-                  ))}
-                </select>
-              </div>
+<div className="space-y-1.5">
+                 <Label>Mata Uang</Label>
+                 <Select value={appliedCurrency} onValueChange={setAppliedCurrency}>
+                   <SelectTrigger>
+                     <SelectValue placeholder="Pilih mata uang" />
+                   </SelectTrigger>
+                   <SelectContent>
+                     {currencies.map((c) => (
+                       <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                     ))}
+                   </SelectContent>
+                 </Select>
+               </div>
+               <div className="space-y-1.5">
+                 <Label>Zona Waktu</Label>
+                 <Select value={appliedTimezone} onValueChange={setAppliedTimezone}>
+                   <SelectTrigger>
+                     <SelectValue placeholder="Pilih zona waktu" />
+                   </SelectTrigger>
+                   <SelectContent>
+                     {timezones.map((tz) => (
+                       <SelectItem key={tz} value={tz}>{tz}</SelectItem>
+                     ))}
+                   </SelectContent>
+                 </Select>
+               </div>
               <Button className="w-full" onClick={saveAppearance}>
                 <Save className="h-4 w-4" /> Simpan Tampilan
               </Button>

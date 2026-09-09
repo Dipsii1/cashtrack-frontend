@@ -1,4 +1,5 @@
 import { RouteGuard } from "@/components/common/route-guard";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 
 export default function DashboardRootLayout({
@@ -8,7 +9,9 @@ export default function DashboardRootLayout({
 }>) {
   return (
     <RouteGuard>
-      <DashboardLayout>{children}</DashboardLayout>
+      <SidebarProvider defaultOpen>
+        <DashboardLayout>{children}</DashboardLayout>
+      </SidebarProvider>
     </RouteGuard>
   );
 }

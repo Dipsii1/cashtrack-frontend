@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Target, Plus, Pencil, Trash2, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -71,9 +71,10 @@ export default function BudgetsPage() {
             onAction={() => setCreating(true)}
           />
         </Card>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {budgets.map((budget, index) => {
+) : (
+         <AnimatePresence mode="popLayout">
+           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+             {budgets.map((budget, index) => {
             const periodStyle = budgetPeriodColors[budget.period];
             const spent = spentFor(budget);
             const remaining = Math.max(Number(budget.amount) - spent, 0);
@@ -83,9 +84,11 @@ export default function BudgetsPage() {
             return (
               <motion.div
                 key={budget.publicId}
-                initial={{ opacity: 0, y: 20 }}
+                layout
+                initial={false}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
+                exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
+                transition={{ duration: 0.2 }}
                 className="rounded-2xl border bg-card p-5 transition-shadow hover:shadow-md"
               >
                 <div className="flex items-start justify-between mb-4">
@@ -146,9 +149,10 @@ export default function BudgetsPage() {
                 </div>
               </motion.div>
             );
-          })}
-        </div>
-      )}
+})}
+         </div>
+         </AnimatePresence>
+       )}
 
       <Dialog open={editing !== null} onOpenChange={(open) => !open && setEditing(null)}>
         <DialogContent>

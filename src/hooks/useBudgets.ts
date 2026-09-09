@@ -4,6 +4,8 @@ import { budgetService, type BudgetInput } from "@/services/budget";
 import { getErrorMessage } from "@/utils/errors";
 import type { Budget, BudgetPeriod } from "@/types";
 
+type BudgetListResponse = { data: Budget[]; meta: unknown };
+
 export const budgetKeys = {
   all: ["budgets"] as const,
   list: () => [...budgetKeys.all, "list"] as const,
@@ -14,7 +16,7 @@ export function useBudgets(enabled = true) {
     queryKey: budgetKeys.list(),
     queryFn: () => budgetService.list(1, 100),
     enabled,
-    select: (data: { data: Budget[]; meta: unknown }) => data.data,
+    select: (data: BudgetListResponse) => data.data,
   });
 }
 
@@ -23,7 +25,9 @@ export function useCreateBudget() {
   return useMutation({
     mutationFn: (input: BudgetInput) => budgetService.create(input),
     onSuccess: (budget) => {
-      qc.setQueryData<Budget[]>(budgetKeys.list(), (old) => [budget, ...(old ?? [])]);
+      qc.setQueryData<BudgetListResponse>(budgetKeys.list(), (old) =>
+        old ? { ...old, data: [budget, ...old.data] } : old
+      );
       qc.invalidateQueries({ queryKey: budgetKeys.all });
       toast.success("Budget berhasil dibuat");
     },

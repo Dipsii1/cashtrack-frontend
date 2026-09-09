@@ -1,12 +1,19 @@
 "use client";
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select-primitive";
 import { useCreateWallet, useUpdateWallet } from "@/hooks/useWallets";
 import type { Wallet } from "@/types";
 
@@ -38,13 +45,14 @@ export function WalletForm({ wallet, onSuccess }: WalletFormProps) {
   const editing = Boolean(wallet);
   const isPending = createWallet.isPending || updateWallet.isPending;
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm<WalletFormValues>({
+const {
+     register,
+     handleSubmit,
+     watch,
+     setValue,
+     control,
+     formState: { errors },
+   } = useForm<WalletFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: wallet?.name ?? "",
@@ -78,20 +86,25 @@ export function WalletForm({ wallet, onSuccess }: WalletFormProps) {
         {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="wallet-currency">Mata Uang</Label>
-        <select
-          id="wallet-currency"
-          className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
-          {...register("currency")}
-        >
-          {currencies.map((c) => (
-            <option key={c.value} value={c.value}>
-              {c.label}
-            </option>
-          ))}
-        </select>
-      </div>
+<div className="space-y-1.5">
+         <Label>Mata Uang</Label>
+         <Controller
+           control={control}
+           name="currency"
+           render={({ field }) => (
+             <Select value={field.value} onValueChange={field.onChange}>
+               <SelectTrigger>
+                 <SelectValue placeholder="Pilih mata uang" />
+               </SelectTrigger>
+               <SelectContent>
+                 {currencies.map((c) => (
+                   <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                 ))}
+               </SelectContent>
+             </Select>
+           )}
+         />
+       </div>
 
       {!editing && (
         <div className="space-y-1.5">

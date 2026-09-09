@@ -1,12 +1,19 @@
 "use client";
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/common/date-picker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select-primitive";
 import { useCreateBudget, useUpdateBudget } from "@/hooks/useBudgets";
 import { useWallets } from "@/hooks/useWallets";
 import { useCategories } from "@/hooks/useCategories";
@@ -38,13 +45,14 @@ export function BudgetForm({ budget, onSuccess }: BudgetFormProps) {
   const { data: wallets = [] } = useWallets();
   const { data: categories = [] } = useCategories("EXPENSE");
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm<BudgetFormValues>({
+const {
+     register,
+     handleSubmit,
+     watch,
+     setValue,
+     control,
+     formState: { errors },
+   } = useForm<BudgetFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: budget?.name ?? "",
@@ -88,48 +96,68 @@ export function BudgetForm({ budget, onSuccess }: BudgetFormProps) {
           <Input id="budget-amount" type="number" step="0.01" min="0" placeholder="0" {...register("amount")} />
           {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
         </div>
-        <div className="space-y-1.5">
-          <Label>Periode</Label>
-          <select
-            className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
-            {...register("period")}
-          >
-            <option value="WEEKLY">Mingguan</option>
-            <option value="MONTHLY">Bulanan</option>
-            <option value="YEARLY">Tahunan</option>
-          </select>
-        </div>
+<div className="space-y-1.5">
+           <Label>Periode</Label>
+           <Controller
+             control={control}
+             name="period"
+             render={({ field }) => (
+               <Select value={field.value} onValueChange={field.onChange}>
+                 <SelectTrigger>
+                   <SelectValue placeholder="Pilih periode" />
+                 </SelectTrigger>
+                 <SelectContent>
+                   <SelectItem value="WEEKLY">Mingguan</SelectItem>
+                   <SelectItem value="MONTHLY">Bulanan</SelectItem>
+                   <SelectItem value="YEARLY">Tahunan</SelectItem>
+                 </SelectContent>
+               </Select>
+             )}
+           />
+         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label>Dompet</Label>
-          <select
-            className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
-            {...register("walletPublicId")}
-          >
-            <option value="">Semua dompet</option>
-            {wallets.map((w) => (
-              <option key={w.publicId} value={w.publicId}>
-                {w.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1.5">
-          <Label>Kategori</Label>
-          <select
-            className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
-            {...register("categoryPublicId")}
-          >
-            <option value="">Semua kategori</option>
-            {categories.map((c) => (
-              <option key={c.publicId} value={c.publicId}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
+<div className="space-y-1.5">
+           <Label>Dompet</Label>
+           <Controller
+             control={control}
+             name="walletPublicId"
+             render={({ field }) => (
+               <Select value={field.value} onValueChange={field.onChange}>
+                 <SelectTrigger>
+                   <SelectValue placeholder="Semua dompet" />
+                 </SelectTrigger>
+                 <SelectContent>
+                   <SelectItem value="">Semua dompet</SelectItem>
+                   {wallets.map((w) => (
+                     <SelectItem key={w.publicId} value={w.publicId}>{w.name}</SelectItem>
+                   ))}
+                 </SelectContent>
+               </Select>
+             )}
+           />
+         </div>
+         <div className="space-y-1.5">
+           <Label>Kategori</Label>
+           <Controller
+             control={control}
+             name="categoryPublicId"
+             render={({ field }) => (
+               <Select value={field.value} onValueChange={field.onChange}>
+                 <SelectTrigger>
+                   <SelectValue placeholder="Semua kategori" />
+                 </SelectTrigger>
+                 <SelectContent>
+                   <SelectItem value="">Semua kategori</SelectItem>
+                   {categories.map((c) => (
+                     <SelectItem key={c.publicId} value={c.publicId}>{c.name}</SelectItem>
+                   ))}
+                 </SelectContent>
+               </Select>
+             )}
+           />
+         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

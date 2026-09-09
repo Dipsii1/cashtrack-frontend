@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
@@ -9,6 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/common/date-picker";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select-primitive";
 import { useWallets } from "@/hooks/useWallets";
 import { useCategories } from "@/hooks/useCategories";
 import { useCreateRecurring, useUpdateRecurring } from "@/hooks/useRecurring";
@@ -48,13 +55,14 @@ export function RecurringForm({ recurring, onSuccess }: RecurringFormProps) {
   const { data: wallets = [] } = useWallets();
   const { data: categories = [] } = useCategories();
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm<RecurringFormValues>({
+const {
+     register,
+     handleSubmit,
+     watch,
+     setValue,
+     control,
+     formState: { errors },
+   } = useForm<RecurringFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       walletPublicId: recurring?.wallet.publicId ?? "",
@@ -114,36 +122,48 @@ export function RecurringForm({ recurring, onSuccess }: RecurringFormProps) {
         ))}
       </div>
 
-      <div className="space-y-1.5">
-        <Label>Dompet</Label>
-        <select
-          className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
-          {...register("walletPublicId")}
-        >
-          <option value="">Pilih dompet</option>
-          {wallets.map((w) => (
-            <option key={w.publicId} value={w.publicId}>
-              {w.name}
-            </option>
-          ))}
-        </select>
-        {errors.walletPublicId && <p className="text-xs text-destructive">{errors.walletPublicId.message}</p>}
-      </div>
+<div className="space-y-1.5">
+         <Label>Dompet</Label>
+         <Controller
+           control={control}
+           name="walletPublicId"
+           render={({ field }) => (
+             <Select value={field.value} onValueChange={field.onChange}>
+               <SelectTrigger>
+                 <SelectValue placeholder="Pilih dompet" />
+               </SelectTrigger>
+               <SelectContent>
+                 <SelectItem value="">Pilih dompet</SelectItem>
+                 {wallets.map((w) => (
+                   <SelectItem key={w.publicId} value={w.publicId}>{w.name}</SelectItem>
+                 ))}
+               </SelectContent>
+             </Select>
+           )}
+         />
+         {errors.walletPublicId && <p className="text-xs text-destructive">{errors.walletPublicId.message}</p>}
+       </div>
 
-      <div className="space-y-1.5">
-        <Label>Kategori</Label>
-        <select
-          className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
-          {...register("categoryPublicId")}
-        >
-          <option value="">Tanpa kategori</option>
-          {filteredCategories.map((c) => (
-            <option key={c.publicId} value={c.publicId}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
+       <div className="space-y-1.5">
+         <Label>Kategori</Label>
+         <Controller
+           control={control}
+           name="categoryPublicId"
+           render={({ field }) => (
+             <Select value={field.value} onValueChange={field.onChange}>
+               <SelectTrigger>
+                 <SelectValue placeholder="Tanpa kategori" />
+               </SelectTrigger>
+               <SelectContent>
+                 <SelectItem value="">Tanpa kategori</SelectItem>
+                 {filteredCategories.map((c) => (
+                   <SelectItem key={c.publicId} value={c.publicId}>{c.name}</SelectItem>
+                 ))}
+               </SelectContent>
+             </Select>
+           )}
+         />
+       </div>
 
       <div className="space-y-1.5">
         <Label htmlFor="rt-title">Judul</Label>
@@ -157,19 +177,25 @@ export function RecurringForm({ recurring, onSuccess }: RecurringFormProps) {
           <Input id="rt-amount" type="number" step="0.01" min="0" placeholder="0" {...register("amount")} />
           {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
         </div>
-        <div className="space-y-1.5">
-          <Label>Frekuensi</Label>
-          <select
-            className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
-            {...register("frequency")}
-          >
-            {frequencies.map((f) => (
-              <option key={f.value} value={f.value}>
-                {f.label}
-              </option>
-            ))}
-          </select>
-        </div>
+<div className="space-y-1.5">
+           <Label>Frekuensi</Label>
+           <Controller
+             control={control}
+             name="frequency"
+             render={({ field }) => (
+               <Select value={field.value} onValueChange={field.onChange}>
+                 <SelectTrigger>
+                   <SelectValue placeholder="Pilih frekuensi" />
+                 </SelectTrigger>
+                 <SelectContent>
+                   {frequencies.map((f) => (
+                     <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                   ))}
+                 </SelectContent>
+               </Select>
+             )}
+           />
+         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

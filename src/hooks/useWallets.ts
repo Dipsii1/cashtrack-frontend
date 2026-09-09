@@ -4,6 +4,8 @@ import { walletService, type WalletInput } from "@/services/wallet";
 import { getErrorMessage } from "@/utils/errors";
 import type { Wallet } from "@/types";
 
+type WalletListResponse = { data: Wallet[]; meta: unknown };
+
 export const walletKeys = {
   all: ["wallets"] as const,
   list: () => [...walletKeys.all, "list"] as const,
@@ -14,7 +16,7 @@ export function useWallets(enabled = true) {
     queryKey: walletKeys.list(),
     queryFn: () => walletService.list(1, 100),
     enabled,
-    select: (data: { data: Wallet[]; meta: unknown }) => data.data,
+    select: (data: WalletListResponse) => data.data,
   });
 }
 
@@ -23,7 +25,9 @@ export function useCreateWallet() {
   return useMutation({
     mutationFn: (input: WalletInput) => walletService.create(input),
     onSuccess: (wallet) => {
-      qc.setQueryData<Wallet[]>(walletKeys.list(), (old) => [wallet, ...(old ?? [])]);
+      qc.setQueryData<WalletListResponse>(walletKeys.list(), (old) =>
+        old ? { ...old, data: [wallet, ...old.data] } : old
+      );
       qc.invalidateQueries({ queryKey: walletKeys.all });
       toast.success("Wallet berhasil dibuat");
     },
@@ -37,8 +41,10 @@ export function useUpdateWallet() {
     mutationFn: ({ publicId, input }: { publicId: string; input: Partial<WalletInput> }) =>
       walletService.update(publicId, input),
     onSuccess: (updated) => {
-      qc.setQueryData<Wallet[]>(walletKeys.list(), (old) =>
-        old?.map((w) => (w.publicId === updated.publicId ? updated : w))
+      qc.setQueryData<WalletListResponse>(walletKeys.list(), (old) =>
+        old
+          ? { ...old, data: old.data.map((w) => (w.publicId === updated.publicId ? updated : w)) }
+          : old
       );
       toast.success("Wallet berhasil diperbarui");
     },
@@ -52,8 +58,10 @@ export function useDeleteWallet() {
     mutationFn: (publicId: string) => walletService.delete(publicId),
     onMutate: async (publicId) => {
       await qc.cancelQueries({ queryKey: walletKeys.list() });
-      const previous = qc.getQueryData<Wallet[]>(walletKeys.list());
-      qc.setQueryData<Wallet[]>(walletKeys.list(), (old) => old?.filter((w) => w.publicId !== publicId));
+      const previous = qc.getQueryData<WalletListResponse>(walletKeys.list());
+      qc.setQueryData<WalletListResponse>(walletKeys.list(), (old) =>
+        old ? { ...old, data: old.data.filter((w) => w.publicId !== publicId) } : old
+      );
       return { previous };
     },
     onError: (_err, _publicId, ctx) => {

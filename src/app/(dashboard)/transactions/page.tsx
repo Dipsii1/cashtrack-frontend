@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   CreditCard,
   Plus,
@@ -186,8 +186,9 @@ export default function TransactionsPage() {
             </Button>
           </div>
 
-          {filtersOpen && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-3 p-3 rounded-xl bg-muted/30">
+{filtersOpen && (
+             <AnimatePresence>
+               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="space-y-3 p-3 rounded-xl bg-muted/30">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>Dari Tanggal</Label>
@@ -198,9 +199,10 @@ export default function TransactionsPage() {
                   <DatePicker value={endDate} onChange={setEndDate} />
                 </div>
               </div>
-            </motion.div>
-          )}
-        </div>
+</motion.div>
+             </AnimatePresence>
+           )}
+         </div>
 
         <div className="overflow-x-auto">
           <Table>
@@ -265,8 +267,8 @@ export default function TransactionsPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(tx)}>
-                          <motion.svg
-                            whileHover={{ scale: 1.1 }}
+<motion.svg
+                             whileTap={{ scale: 0.95 }}
                             className="h-4 w-4"
                             fill="none"
                             viewBox="0 0 24 24"

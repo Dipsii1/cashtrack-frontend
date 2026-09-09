@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { PiggyBank, Plus, Pencil, Trash2, Calendar, CheckCircle2, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,8 +72,9 @@ export default function SavingsGoalsPage() {
             onAction={() => setCreating(true)}
           />
         </Card>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+) : (
+         <AnimatePresence mode="popLayout">
+           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {goals.map((goal, index) => {
             const accent = goalAccents[index % goalAccents.length];
             const progress = goal.targetAmount > 0 ? (Number(goal.currentAmount) / goal.targetAmount) * 100 : 0;
@@ -86,9 +87,11 @@ export default function SavingsGoalsPage() {
             return (
               <motion.div
                 key={goal.publicId}
-                initial={{ opacity: 0, y: 20 }}
+                layout
+                initial={false}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
+                exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
+                transition={{ duration: 0.2 }}
                 className="relative overflow-hidden rounded-2xl border bg-card p-5 transition-shadow hover:shadow-md"
               >
                 <div className={cn("absolute inset-x-0 top-0 h-1 rounded-t-2xl", accent)} />
@@ -171,9 +174,10 @@ export default function SavingsGoalsPage() {
                 </div>
               </motion.div>
             );
-          })}
-        </div>
-      )}
+})}
+         </div>
+         </AnimatePresence>
+       )}
 
       <Dialog open={editing !== null} onOpenChange={(open) => !open && setEditing(null)}>
         <DialogContent>
